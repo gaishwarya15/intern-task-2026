@@ -3,6 +3,7 @@
   "title": "FeedbackResponse",
   "description": "Response body from the /feedback endpoint",
   "type": "object",
+  "additionalProperties": false,
   "required": ["corrected_sentence", "is_correct", "errors", "difficulty"],
   "properties": {
     "corrected_sentence": {
@@ -18,6 +19,7 @@
       "description": "List of errors found in the sentence. Empty array if the sentence is correct.",
       "items": {
         "type": "object",
+        "additionalProperties": false,
         "required": ["original", "correction", "error_type", "explanation"],
         "properties": {
           "original": {

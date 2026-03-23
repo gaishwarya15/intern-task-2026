@@ -111,6 +111,119 @@ class TestResponseSchema:
             )
 
 
+class TestRequestSchemaEdgeCases:
+    def test_missing_target_language_fails(self):
+        schema = load_schema("request.schema.json")
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(
+                {"sentence": "Hola", "native_language": "English"}, schema
+            )
+
+    def test_missing_native_language_fails(self):
+        schema = load_schema("request.schema.json")
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(
+                {"sentence": "Hola", "target_language": "Spanish"}, schema
+            )
+
+    def test_extra_fields_rejected(self):
+        schema = load_schema("request.schema.json")
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(
+                {
+                    "sentence": "Hola",
+                    "target_language": "Spanish",
+                    "native_language": "English",
+                    "unexpected_field": "should fail",
+                },
+                schema,
+            )
+
+
+class TestResponseSchemaEdgeCases:
+    def test_missing_errors_field_fails(self):
+        schema = load_schema("response.schema.json")
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(
+                {
+                    "corrected_sentence": "test",
+                    "is_correct": True,
+                    "difficulty": "A1",
+                },
+                schema,
+            )
+
+    def test_missing_error_subfield_fails(self):
+        """Error object missing 'explanation' should fail."""
+        schema = load_schema("response.schema.json")
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(
+                {
+                    "corrected_sentence": "test",
+                    "is_correct": False,
+                    "errors": [
+                        {
+                            "original": "x",
+                            "correction": "y",
+                            "error_type": "grammar",
+                        }
+                    ],
+                    "difficulty": "A1",
+                },
+                schema,
+            )
+
+    def test_extra_fields_in_response_rejected(self):
+        schema = load_schema("response.schema.json")
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(
+                {
+                    "corrected_sentence": "test",
+                    "is_correct": True,
+                    "errors": [],
+                    "difficulty": "A1",
+                    "extra": "not allowed",
+                },
+                schema,
+            )
+
+    @pytest.mark.parametrize(
+        "error_type",
+        [
+            "grammar", "spelling", "word_choice", "punctuation",
+            "word_order", "missing_word", "extra_word", "conjugation",
+            "gender_agreement", "number_agreement", "tone_register", "other",
+        ],
+    )
+    def test_all_error_types_accepted(self, error_type):
+        schema = load_schema("response.schema.json")
+        valid = {
+            "corrected_sentence": "test",
+            "is_correct": False,
+            "errors": [
+                {
+                    "original": "x",
+                    "correction": "y",
+                    "error_type": error_type,
+                    "explanation": "test",
+                }
+            ],
+            "difficulty": "A1",
+        }
+        jsonschema.validate(valid, schema)
+
+    @pytest.mark.parametrize("level", ["A1", "A2", "B1", "B2", "C1", "C2"])
+    def test_all_difficulty_levels_accepted(self, level):
+        schema = load_schema("response.schema.json")
+        valid = {
+            "corrected_sentence": "test",
+            "is_correct": True,
+            "errors": [],
+            "difficulty": level,
+        }
+        jsonschema.validate(valid, schema)
+
+
 class TestExamplesMatchSchemas:
     """Verify that all example inputs/outputs conform to the schemas."""
 
