@@ -55,29 +55,29 @@ On top of the LLM-level enforcement, Pydantic models in `app/models.py` use `Lit
 
 ```text
 intern-task-2026/
-├── app/
+├── app/                          # API application code
 │   ├── __init__.py
-│   ├── feedback.py
-│   ├── main.py
-│   └── models.py
-├── examples/
+│   ├── main.py                   # FastAPI routes and handlers
+│   ├── feedback.py               # Prompt, provider calls, cache, fallback
+│   └── models.py                 # Pydantic request/response models
+├── schema/                       # JSON schemas used for validation
+│   ├── request.schema.json
+│   └── response.schema.json
+├── examples/                     # Example request/response samples
 │   └── sample_inputs.json
-├── images/
+├── tests/                        # Unit, integration, and schema tests
+│   ├── test_feedback_unit.py
+│   ├── test_feedback_integration.py
+│   └── test_schema.py
+├── images/                       # README example output screenshots
 │   ├── French.png
 │   ├── German.png
 │   └── Spanish.png
-├── schema/
-│   ├── request.schema.json
-│   └── response.schema.json
-├── tests/
-│   ├── test_feedback_integration.py
-│   ├── test_feedback_unit.py
-│   └── test_schema.py
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-├── README.md
-└── MY_README.md
+├── Dockerfile                    # Container build instructions
+├── docker-compose.yml            # Local Docker orchestration
+├── requirements.txt              # Python dependencies
+├── RULES.md                      # Task rules/reference
+└── README.md                     # Project documentation
 ```
 
 ---
@@ -89,10 +89,10 @@ I tested five models to find the right trade-off between accuracy, latency and c
 |           Model         |    Provider   |   Latency   | Linguistic Accuracy | Cost (input / output per 1M tokens) |
 |-------------------------|---------------|-------------|---------------------|-------------------------------------|
 |  **claude-sonnet-4-6**  |   Anthropic   |    ~2–5s    |       Excellent     |           $3.00 / $15.00            |
-|  **claude-haiku-4-5**   |   Anthropic   |    ~3–5s    |         Good        |           $0.80 / $4.00             |
+|  **claude-haiku-4-5**   |   Anthropic   |    ~3–5s    |         Good        |           $1.00 / $5.00             |
 |  **gpt-4o-mini**        |   OpenAI      |    ~1–3s    |       Very good     |           $0.15 / $0.60             |
 |  **gpt-4.1-mini**       |   OpenAI      |    ~1–3s    |         Good        |           $0.40 / $1.60             |
-|  **gpt-5-nano**         |   OpenAI      |     >30s    |         Good        |           $0.10 / $0.40             |
+|  **gpt-5-nano**         |   OpenAI      |     >30s    |         Good        |           $0.05 / $0.40             |
 
 **What I observed:**
 
@@ -112,7 +112,7 @@ I tested five models to find the right trade-off between accuracy, latency and c
 
 ## Cost-Effectiveness
 
-A single feedback request costs roughly **$0.001–0.003** with the default models. Here's how I keep it low:
+A single feedback request is low-cost and depends on the provider/model path used. Here's how I keep it low:
 
 **1. Balanced model choice.** I use a stronger primary model for better linguistic quality, but keep the fallback path configurable through the OpenAI `MODEL` environment variable. This keeps the system flexible between accuracy-first and cost-first setups.
 
@@ -165,18 +165,6 @@ This structure performed better than a shorter prompt because the task combines 
 ---
 
 ## Example Outputs
-
-### Spanish — Conjugation Error
-
-```json
-{
-  "sentence": "Yo soy fue al mercado ayer.",
-  "target_language": "Spanish",
-  "native_language": "English"
-}
-```
-
-![Spanish output](images/Spanish.png)
 
 ### French — Gender Agreement
 
